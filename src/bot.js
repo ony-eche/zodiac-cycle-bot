@@ -49,7 +49,7 @@ const formatLink = (url) => {
 async function runGlobalEngagement() {
   console.log("🔍 Scanning for engagement opportunities on X, Bluesky, and Mastodon...");
   await Promise.allSettled([
-    searchAndEngage(), // Your X function
+    
     engageBluesky(),   // Your Bsky function
     engageMastodon()   // Your Mastodon function
   ]);
@@ -117,3 +117,5 @@ console.log('🌙 ZodiacCycle multi-platform bot is live!');
 
 // If you want to test on startup, use runBot() so the lock file is created
 // runBot();
+import http from 'http';
+http.createServer((req, res) => res.end('Bot is alive!')).listen(process.env.PORT || 3000);
