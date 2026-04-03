@@ -1,17 +1,20 @@
+import http from 'http'; // <--- 1. Add this import
 import cron from 'node-cron';
 import { rwClient } from './xClient.js';
-import { postToBluesky } from './bskyClient.js';
-import { postToMastodon } from './mastodonClient.js';
-import { generateScheduledTweet } from './generateTweet.js';
-import { searchAndEngage } from './replyEngine.js'; 
-import { postToThreads } from './threadsClient.js';
-import { engageBluesky } from './bskyEngage.js';
-import { engageMastodon } from './mastodonEngage.js';
-import { getRandomTopic } from './topics.js';
-import fs from 'fs';
+// ... (your other imports)
+
+// --- 2. ADD THIS DUMMY SERVER RIGHT HERE ---
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.write('ZodiacCycle Bot is Active 🚀');
+  res.end();
+}).listen(process.env.PORT || 3000); 
+console.log("🌐 Dummy server started to keep Render happy.");
+// --------------------------------------------
 
 const LOCK_FILE = './posting.lock';
 const ENGAGE_LOCK = './engage.lock';
+
 
 // Helper to prevent "Zombie" processes
 const withLock = async (lockPath, taskFn) => {
