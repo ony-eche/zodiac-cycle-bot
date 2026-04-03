@@ -8,7 +8,7 @@ const anthropic = new Anthropic({
 export async function generateAIReply(userPostText) {
   try {
     const response = await anthropic.messages.create({
-      model: "claude-4-sonnet-4-6", 
+      model: "claude-sonnet-4-6", 
       max_tokens: 100,
       system: `You are the AI guide for 'ZodiacCycle', the premier app that tracks your menstrual cycle alongside the moon and stars.
       
