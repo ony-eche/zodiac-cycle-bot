@@ -49,7 +49,7 @@ const formatLink = (url) => {
 async function runGlobalEngagement() {
   console.log("🔍 Scanning for engagement opportunities on X, Bluesky, and Mastodon...");
   await Promise.allSettled([
-    
+    searchAndEngage(),
     engageBluesky(),   // Your Bsky function
     engageMastodon()   // Your Mastodon function
   ]);
@@ -104,18 +104,6 @@ scheduleJob('0 8 * * *', runBot);
 scheduleJob('0 13 * * *', runBot);
 scheduleJob('0 19 * * *', runBot);
 scheduleJob('*/15 * * * *', runGlobalEngagement);
-// --- Cron Schedules ---
-// CHANGE THESE: Call runBot instead of postScheduledTweet
-cron.schedule('0 8 * * *', runBot);
-cron.schedule('0 13 * * *', runBot);
-cron.schedule('0 19 * * *', runBot);
 
-// Combined engagement job (Runs every 15 mins)
-cron.schedule('*/15 * * * *', runGlobalEngagement);
 
-console.log('🌙 ZodiacCycle multi-platform bot is live!');
-
-// If you want to test on startup, use runBot() so the lock file is created
-// runBot();
-import http from 'http';
-http.createServer((req, res) => res.end('Bot is alive!')).listen(process.env.PORT || 3000);
+runGlobalEngagement();

@@ -6,8 +6,8 @@ export async function postToMastodon(text) {
     try {
         // Ensure the URL and Token are present
         const masto = createRestAPIClient({
-            url: process.env.MASTO_INSTANCE_URL.trim(), // e.g., https://mastodon.social
-            accessToken: process.env.MASTO_ACCESS_TOKEN.trim(),
+            url: process.env.MASTODON_API_URL.trim(), // e.g., https://mastodon.social
+            accessToken: process.env.MASTODON_ACCESS_TOKEN.trim(),
         });
 
         // Mastodon has a 500-character limit (standard)
