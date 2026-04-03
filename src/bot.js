@@ -1,21 +1,29 @@
 import http from 'http'; 
 import fs from 'fs';
 import cron from 'node-cron';
-import { rwClient } from './xClient.js';
-// ... (your other imports)
 
-// --- 2. ADD THIS DUMMY SERVER RIGHT HERE ---
+// 1. ALL NECESSARY IMPORTS (Make sure these paths are correct)
+import { rwClient } from './xClient.js';
+import { postToBluesky } from './bskyClient.js';
+import { postToMastodon } from './mastodonClient.js';
+import { postToThreads } from './threadsClient.js';
+import { generateScheduledTweet } from './generateTweet.js';
+import { searchAndEngage } from './replyEngine.js'; 
+import { engageBluesky } from './bskyEngage.js';
+import { engageMastodon } from './mastodonEngage.js';
+import { getRandomTopic } from './topics.js';
+
+// --- 2. DUMMY SERVER (Keeps Render alive) ---
 http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.write('ZodiacCycle Bot is Active 🚀');
   res.end();
 }).listen(process.env.PORT || 3000); 
+
 console.log("🌐 Dummy server started to keep Render happy.");
-// --------------------------------------------
 
 const LOCK_FILE = './posting.lock';
 const ENGAGE_LOCK = './engage.lock';
-
 
 // Helper to prevent "Zombie" processes
 const withLock = async (lockPath, taskFn) => {
@@ -32,7 +40,7 @@ const withLock = async (lockPath, taskFn) => {
 };
 
 /**
- * 1. BROADCAST ENGINE (Scheduled Posts)
+ * BROADCAST ENGINE (Scheduled Posts)
  */
 async function postScheduledTweet() {
     try {
@@ -41,7 +49,6 @@ async function postScheduledTweet() {
         const finalContent = `${baseContent}\n\nSync your cycle: https://zodiaccycle.app`;
         
         console.log(`🚀 Broadcasting to all platforms...`);
-        // Broadcasts are light on CPU, so Promise.all is fine here
         await Promise.allSettled([
             rwClient.v2.tweet(finalContent),
             postToBluesky(finalContent),
@@ -54,22 +61,26 @@ async function postScheduledTweet() {
 }
 
 /**
- * 2. ENGAGEMENT ENGINE (The "Staggered" Fix)
- * We run these sequentially to prevent the CPU from spiking 
- * while waiting for multiple Claude 4.6 responses.
+ * ENGAGEMENT ENGINE (Staggered to save CPU)
  */
 async function runGlobalEngagement() {
     await withLock(ENGAGE_LOCK, async () => {
         console.log("🔍 Staggered Engagement Start...");
         
-        console.log("-> Processing X...");
-        await searchAndEngage();
+        try {
+            console.log("-> Processing X...");
+            await searchAndEngage();
+        } catch (e) { console.error("❌ X Logic Failed:", e.message); }
         
-        console.log("-> Processing Bluesky...");
-        await engageBluesky();
+        try {
+            console.log("-> Processing Bluesky...");
+            await engageBluesky();
+        } catch (e) { console.error("❌ Bluesky Logic Failed:", e.message); }
         
-        console.log("-> Processing Mastodon...");
-        await engageMastodon();
+        try {
+            console.log("-> Processing Mastodon...");
+            await engageMastodon();
+        } catch (e) { console.error("❌ Mastodon Logic Failed:", e.message); }
         
         console.log("✅ All engagement cycles complete.");
     });
@@ -77,13 +88,13 @@ async function runGlobalEngagement() {
 
 // --- CRON SCHEDULING ---
 
-// Broadcast posts 3x a day
+// Broadcast posts at 8 AM, 1 PM, and 7 PM
 cron.schedule('0 8,13,19 * * *', () => {
     withLock(LOCK_FILE, postScheduledTweet);
 });
 
-// Engagement every 15 mins (staggered internally)
+// Engagement every 15 mins
 cron.schedule('*/15 * * * *', runGlobalEngagement);
 
-// Initial start-up run
+// Run once immediately on startup
 runGlobalEngagement();
